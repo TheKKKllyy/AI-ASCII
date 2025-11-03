@@ -97,7 +97,7 @@
 </div>
 
 <script>
-const PROXY_URL = "https://dpp-kdvl.onrender.com"; // replace with your Render URL
+const PROXY_URL = "https://dpp-kdvl.onrender.com"; // your Render URL
 
 async function sendMessage() {
   const input = document.getElementById("input");
@@ -107,35 +107,40 @@ async function sendMessage() {
 
   appendMessage("You", message, "user");
 
-  const response = await fetch(PROXY_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      messages: [
-        { role: "system", content: "You are a, friendly AI named Henry, introduce yourself by saying'Hi, I'm Henry, Khyenrab's friend. Here to answer all your questions.'. Always respond in English only. Prefix messages with 'AI:' and use Markdown formatting for bold, italics, headers, and lists where appropriate." },
-        { role: "user", content: message }
-      ]
-    })
-  });
+  try {
+    const response = await fetch(`${PROXY_URL}/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message }) // just the message
+    });
 
-  const data = await response.json();
-  const reply = data.choices?.[0]?.message?.content || "AI did not respond.";
-  appendMessage("AI", reply, "ai");
+    const data = await response.json();
+    const reply = data.reply || "AI did not respond.";
+    appendMessage("AI", reply, "ai");
+  } catch (err) {
+    appendMessage("AI", "Error connecting to AI.", "ai");
+    console.error(err);
+  }
 }
 
 function appendMessage(who, text, cls) {
   const chat = document.getElementById("chat");
   const div = document.createElement("div");
   div.className = `message ${cls}`;
-  // Replace Markdown **bold** and *italic* with HTML tags
-  div.innerHTML = `<strong>${who}:</strong> ${text
+  
+  // Basic Markdown -> HTML conversion
+  let html = text
     .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
     .replace(/\*(.+?)\*/g, "<em>$1</em>")
     .replace(/^### (.+)$/gm, "<h3>$1</h3>")
     .replace(/^## (.+)$/gm, "<h2>$1</h2>")
     .replace(/^# (.+)$/gm, "<h1>$1</h1>")
-    .replace(/^- (.+)$/gm, "<li>$1</li>")
-  }`;
+    .replace(/^- (.+)$/gm, "<li>$1</li>");
+  
+  // Wrap list items in <ul> if any <li> exist
+  if (html.includes("<li>")) html = `<ul>${html}</ul>`;
+
+  div.innerHTML = `<strong>${who}:</strong> ${html}`;
   chat.appendChild(div);
   chat.scrollTop = chat.scrollHeight;
 }
