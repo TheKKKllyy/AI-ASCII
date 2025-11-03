@@ -1,68 +1,55 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>DeepSeek AI Chat</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 2rem; }
-    #chat { border: 1px solid #ccc; padding: 1rem; max-width: 600px; height: 400px; overflow-y: auto; margin-bottom: 1rem; }
-    .message { margin: 0.5rem 0; }
-    .user { color: blue; }
-    .ai { color: green; }
-    input, button { padding: 0.5rem; font-size: 1rem; }
-  </style>
+<meta charset="UTF-8">
+<title>AI Chat</title>
+<style>
+  body { font-family: sans-serif; }
+  .chat { max-width: 600px; margin: 2em auto; }
+  .message { margin-bottom: 1em; }
+  .user { color: blue; }
+  .ai { color: green; }
+</style>
 </head>
 <body>
-
-<h2>DeepSeek AI Chat</h2>
-<div id="chat"></div>
-<input type="text" id="messageInput" placeholder="Type your message here" />
-<button id="sendBtn">Send</button>
+<div class="chat" id="chat"></div>
+<input type="text" id="input" placeholder="Type your message..." style="width: 80%;">
+<button onclick="sendMessage()">Send</button>
 
 <script>
-  const PROXY_URL = "https://your-app-name.onrender.com/chat"; // replace with your Render URL
-  const chatDiv = document.getElementById("chat");
-  const input = document.getElementById("messageInput");
-  const btn = document.getElementById("sendBtn");
+const PROXY_URL = "https://your-proxy-url.com/chat"; // replace with your Render URL
 
-  function addMessage(text, sender) {
-    const msg = document.createElement("div");
-    msg.className = "message " + sender;
-    msg.textContent = text;
-    chatDiv.appendChild(msg);
-    chatDiv.scrollTop = chatDiv.scrollHeight;
-  }
+async function sendMessage() {
+  const input = document.getElementById("input");
+  const message = input.value;
+  input.value = "";
 
-  async function sendMessage() {
-    const message = input.value.trim();
-    if (!message) return;
-    addMessage(message, "user");
-    input.value = "";
+  appendMessage("You", message, "user");
 
-    try {
-      const res = await fetch(PROXY_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message })
-      });
-
-      const data = await res.json();
-      if (data.reply) {
-        addMessage(data.reply, "ai");
-      } else {
-        addMessage("No response from AI.", "ai");
-      }
-    } catch (err) {
-      addMessage("Error connecting to AI.", "ai");
-      console.error(err);
-    }
-  }
-
-  btn.addEventListener("click", sendMessage);
-  input.addEventListener("keypress", e => {
-    if (e.key === "Enter") sendMessage();
+  const response = await fetch(PROXY_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      messages: [
+        { role: "system", content: "You are a witty, friendly AI. Always respond in English only. Prefix messages with 'AI:' and use Markdown formatting for bold, italics, headers, and lists where appropriate." },
+        { role: "user", content: message }
+      ]
+    })
   });
-</script>
 
+  const data = await response.json();
+  const reply = data.choices?.[0]?.message?.content || "AI did not respond.";
+  appendMessage("AI", reply, "ai");
+}
+
+function appendMessage(who, text, cls) {
+  const chat = document.getElementById("chat");
+  const div = document.createElement("div");
+  div.className = `message ${cls}`;
+  div.innerHTML = `<strong>${who}:</strong> ${text}`;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+</script>
 </body>
 </html>
