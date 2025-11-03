@@ -3,15 +3,23 @@
 <head>
   <meta charset="UTF-8">
   <title>DeepSeek Chat</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 600px; margin: 2em auto; }
+    #chatOutput { border: 1px solid #ccc; padding: 10px; height: 300px; overflow-y: auto; margin-bottom: 10px; }
+    textarea { width: 100%; height: 50px; }
+    button { padding: 10px 20px; margin-top: 5px; }
+    p { margin: 5px 0; }
+    b { color: #333; }
+  </style>
 </head>
 <body>
-  <h1>Chat with AI</h1>
+  <h1>DeepSeek Chat</h1>
+  <div id="chatOutput"></div>
   <textarea id="userMessage" placeholder="Type a message..."></textarea>
   <button id="sendBtn">Send</button>
-  <div id="chatOutput"></div>
 
   <script>
-    // Your backend URL
+    // Your Render backend chat endpoint
     const PROXY_URL = "https://dpp-kdvl.onrender.com";
 
     const sendBtn = document.getElementById("sendBtn");
@@ -19,10 +27,12 @@
     const chatOutput = document.getElementById("chatOutput");
 
     sendBtn.addEventListener("click", async () => {
-      const message = userMessage.value;
+      const message = userMessage.value.trim();
       if (!message) return;
 
+      // Add user's message to chat
       chatOutput.innerHTML += `<p><b>You:</b> ${message}</p>`;
+      chatOutput.scrollTop = chatOutput.scrollHeight;
 
       try {
         const res = await fetch(PROXY_URL, {
@@ -31,13 +41,26 @@
           body: JSON.stringify({ message })
         });
 
+        if (!res.ok) throw new Error(`Server returned ${res.status}`);
+
         const data = await res.json();
         chatOutput.innerHTML += `<p><b>AI:</b> ${data.reply}</p>`;
+        chatOutput.scrollTop = chatOutput.scrollHeight;
       } catch (err) {
         chatOutput.innerHTML += `<p><b>Error:</b> ${err}</p>`;
+        chatOutput.scrollTop = chatOutput.scrollHeight;
       }
 
       userMessage.value = "";
+      userMessage.focus();
+    });
+
+    // Optional: send message on Enter key
+    userMessage.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        sendBtn.click();
+      }
     });
   </script>
 </body>
