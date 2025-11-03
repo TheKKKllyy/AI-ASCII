@@ -2,67 +2,67 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>DeepSeek Chat</title>
+  <title>DeepSeek AI Chat</title>
   <style>
-    body { font-family: Arial, sans-serif; max-width: 600px; margin: 2em auto; }
-    #chatOutput { border: 1px solid #ccc; padding: 10px; height: 300px; overflow-y: auto; margin-bottom: 10px; }
-    textarea { width: 100%; height: 50px; }
-    button { padding: 10px 20px; margin-top: 5px; }
-    p { margin: 5px 0; }
-    b { color: #333; }
+    body { font-family: Arial, sans-serif; margin: 2rem; }
+    #chat { border: 1px solid #ccc; padding: 1rem; max-width: 600px; height: 400px; overflow-y: auto; margin-bottom: 1rem; }
+    .message { margin: 0.5rem 0; }
+    .user { color: blue; }
+    .ai { color: green; }
+    input, button { padding: 0.5rem; font-size: 1rem; }
   </style>
 </head>
 <body>
-  <h1>DeepSeek Chat</h1>
-  <div id="chatOutput"></div>
-  <textarea id="userMessage" placeholder="Type a message..."></textarea>
-  <button id="sendBtn">Send</button>
 
-  <script>
-    // Your Render backend chat endpoint
-    const PROXY_URL = "https://dpp-kdvl.onrender.com/chat";
+<h2>DeepSeek AI Chat</h2>
+<div id="chat"></div>
+<input type="text" id="messageInput" placeholder="Type your message here" />
+<button id="sendBtn">Send</button>
 
-    const sendBtn = document.getElementById("sendBtn");
-    const userMessage = document.getElementById("userMessage");
-    const chatOutput = document.getElementById("chatOutput");
+<script>
+  const PROXY_URL = "https://your-app-name.onrender.com/chat"; // replace with your Render URL
+  const chatDiv = document.getElementById("chat");
+  const input = document.getElementById("messageInput");
+  const btn = document.getElementById("sendBtn");
 
-    sendBtn.addEventListener("click", async () => {
-      const message = userMessage.value.trim();
-      if (!message) return;
+  function addMessage(text, sender) {
+    const msg = document.createElement("div");
+    msg.className = "message " + sender;
+    msg.textContent = text;
+    chatDiv.appendChild(msg);
+    chatDiv.scrollTop = chatDiv.scrollHeight;
+  }
 
-      // Add user's message to chat
-      chatOutput.innerHTML += `<p><b>You:</b> ${message}</p>`;
-      chatOutput.scrollTop = chatOutput.scrollHeight;
+  async function sendMessage() {
+    const message = input.value.trim();
+    if (!message) return;
+    addMessage(message, "user");
+    input.value = "";
 
-      try {
-        const res = await fetch(PROXY_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message })
-        });
+    try {
+      const res = await fetch(PROXY_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message })
+      });
 
-        if (!res.ok) throw new Error(`Server returned ${res.status}`);
-
-        const data = await res.json();
-        chatOutput.innerHTML += `<p><b>AI:</b> ${data.reply}</p>`;
-        chatOutput.scrollTop = chatOutput.scrollHeight;
-      } catch (err) {
-        chatOutput.innerHTML += `<p><b>Error:</b> ${err}</p>`;
-        chatOutput.scrollTop = chatOutput.scrollHeight;
+      const data = await res.json();
+      if (data.reply) {
+        addMessage(data.reply, "ai");
+      } else {
+        addMessage("No response from AI.", "ai");
       }
+    } catch (err) {
+      addMessage("Error connecting to AI.", "ai");
+      console.error(err);
+    }
+  }
 
-      userMessage.value = "";
-      userMessage.focus();
-    });
+  btn.addEventListener("click", sendMessage);
+  input.addEventListener("keypress", e => {
+    if (e.key === "Enter") sendMessage();
+  });
+</script>
 
-    // Optional: send message on Enter key
-    userMessage.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        sendBtn.click();
-      }
-    });
-  </script>
 </body>
 </html>
-
