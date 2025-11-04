@@ -87,7 +87,7 @@
 <body>
 
 <div class="chat-container">
-  <div class="chat-header">Henry the AI</div>
+  <div class="chat-header">Hi, I'm Henry</div>
   <div class="chat-box" id="chat"></div>
   <div class="input-area">
     <input type="text" id="input" placeholder="Type your message..." />
@@ -98,13 +98,13 @@
 <script>
 const PROXY_URL = "https://dpp-kdvl.onrender.com/chat"; // your Render proxy URL
 
-// 🧠 Persona definition (editable)
+// 🧠 Persona definition
 const persona = `
-You are Henry, a friendly AI who speaks fluent English only.
+You are Henry, a witty, friendly AI who speaks fluent English only.
 You introduce yourself with: "Hi, I'm Henry — Khyenrab's friend and assistant!"
 Always reply in a warm, human-like way, and never use Chinese or other languages.
 Use **bold**, *italics*, headers (#, ##, ###), and bullet points when it makes responses clearer.
-Never include technical tags like <｜begin▁of▁sentence｜>.
+Never include any system tokens like <｜begin▁of▁sentence｜> or similar.
 `;
 
 async function sendMessage() {
@@ -127,8 +127,8 @@ async function sendMessage() {
     const data = await response.json();
     let reply = data.reply || "AI did not respond.";
 
-    // 🧹 Clean unwanted symbols like <｜begin▁of▁sentence｜>
-    reply = reply.replace(/<\|.*?\|>/g, "").trim();
+    // 🧹 Remove any artifacts like <｜begin▁of▁sentence｜> or <|...|>
+    reply = reply.replace(/<\|.*?\|>/g, "").replace(/[▁]+/g, " ").trim();
 
     appendMessage("AI", reply, "ai");
   } catch (err) {
@@ -142,7 +142,7 @@ function appendMessage(who, text, cls) {
   const div = document.createElement("div");
   div.className = `message ${cls}`;
 
-  // Markdown-like formatting
+  // Markdown formatting
   let html = text
     .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
     .replace(/\*(.+?)\*/g, "<em>$1</em>")
@@ -157,8 +157,15 @@ function appendMessage(who, text, cls) {
   chat.appendChild(div);
   chat.scrollTop = chat.scrollHeight;
 }
+
+// ✨ Allow sending with Enter key
+document.getElementById("input").addEventListener("keypress", function (e) {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    sendMessage();
+  }
+});
 </script>
 
 </body>
 </html>
-
